@@ -11,7 +11,7 @@ VIDEOS = [
 
 OUTPUT_DIR = "all_frames"
 IMG_SIZE = 640        # 640x640
-FRAME_STEP = 1        # save every frame (increase to skip frames)
+FRAME_STEP = 30
 
 def extract_frames(video_path, output_dir, img_size=640, frame_step=60):
     cap = cv2.VideoCapture(video_path)
