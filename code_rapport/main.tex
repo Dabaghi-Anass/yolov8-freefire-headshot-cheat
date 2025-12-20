@@ -1,0 +1,290 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[scaled=0.95]{helvet}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{sectsty}
+
+\renewcommand{\familydefault}{\sfdefault}
+\geometry{margin=2.5cm}
+
+% Définition des couleurs
+\definecolor{headerblue}{RGB}{41,128,185}
+\definecolor{lightblue}{RGB}{174,214,241}
+\definecolor{darkgreen}{RGB}{39,174,96}
+\definecolor{lightgreen}{RGB}{200,247,197}
+\definecolor{darkorange}{RGB}{230,126,34}
+\definecolor{lightorange}{RGB}{255,213,153}
+\definecolor{darkred}{RGB}{192,57,43}
+
+% Couleurs pour les sections
+\sectionfont{\color{headerblue}}
+\subsectionfont{\color{headerblue}}
+
+\title{\textbf{\color{headerblue}Détection d'Objets par Apprentissage Profond}\\
+\vspace{20}
+\large Étude Expérimentale avec YOLO}
+\author{Auteur : \textbf{Anass Dabaghi}}
+\date{16 décembre 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Ce rapport présente une étude expérimentale approfondie d'un modèle de détection d'objets basé sur l'architecture YOLO (You Only Look Once). L'objectif est d'évaluer les performances du modèle sur un jeu de données multi-classes dédié à la détection de véhicules, en analysant la précision, le rappel, la mAP ainsi que le comportement du modèle durant l'apprentissage et l'inférence. Les résultats obtenus sont analysés quantitativement et qualitativement à l'aide de métriques standards et de visualisations.
+\end{abstract}
+
+\section{Introduction}
+La détection d'objets constitue un problème central en vision par ordinateur, combinant à la fois la localisation spatiale et la classification sémantique des objets présents dans une image. Les architectures de type YOLO se distinguent par leur capacité à effectuer ces deux tâches en un seul passage du réseau, permettant ainsi une inférence en temps réel.
+
+Dans ce travail, nous évaluons un modèle YOLO entraîné pour la détection de différentes catégories de véhicules dans des scènes routières complexes.
+
+\subsection{Performances Globales du Modèle}
+
+Le modèle entraîné a atteint les performances suivantes sur l'ensemble de validation :
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\rowcolor{lightblue}
+\textbf{Métrique} & \textbf{Valeur} \\
+\hline
+\rowcolor{lightgreen}
+Précision (Precision) & \textbf{0.779} \\
+\hline
+Rappel (Recall) & \textbf{0.777} \\
+\hline
+\rowcolor{lightgreen}
+mAP@50 & \textbf{0.829} \\
+\hline
+mAP@50-95 & \textbf{0.589} \\
+\hline
+\end{tabular}
+\caption{Métriques de performance du modèle YOLO}
+\label{tab:metrics}
+\end{table}
+
+Ces résultats indiquent :
+\begin{itemize}
+    \item \textbf{Précision et Rappel équilibrés} (~0.78) : Le modèle maintient un bon compromis entre faux positifs et faux négatifs
+    \item \textbf{mAP@50 excellente} (0.829) : Performance robuste avec un seuil IoU de 0.5
+    \item \textbf{mAP@50-95 modérée} (0.589) : Indique des difficultés de localisation précise pour certaines classes
+\end{itemize}
+
+\section{Architecture du Modèle}
+Le modèle utilisé repose sur l'architecture YOLO, qui formule la détection d'objets comme un problème de régression directe. Chaque image est divisée en une grille, et pour chaque cellule, le réseau prédit :
+\begin{itemize}
+    \item Les coordonnées des boîtes englobantes
+    \item Les probabilités de classes
+    \item Les scores de confiance
+\end{itemize}
+
+Cette approche permet une détection rapide tout en conservant une précision élevée.
+
+\section{Jeu de Données}
+Le jeu de données est composé d'images annotées contenant plusieurs classes de véhicules. Les annotations sont fournies sous forme de boîtes englobantes normalisées, compatibles avec le format YOLO.
+
+\subsection{Distribution des Classes}
+La Figure~\ref{fig:labels} illustre la distribution des classes dans le jeu de données.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{labels.jpg}
+    \caption{Distribution des classes dans le jeu de données}
+    \label{fig:labels}
+\end{figure}
+
+\textbf{Analyse de la distribution :}
+\begin{itemize}
+    \item \textcolor{darkgreen}{\textbf{Voiture}} : 4111 instances (classe dominante, 44\%)
+    \item \textcolor{darkorange}{\textbf{Plaque d'immatriculation floutée}} : 1598 instances (17\%)
+    \item \textbf{Deux-roues} : 1072 instances (11\%)
+    \item \textbf{Plaque d'immatriculation} : 1149 instances (12\%)
+    \item \textcolor{darkred}{\textbf{Auto-rickshaw}} : 305 instances (3\% - classe minoritaire)
+    \item \textbf{Bus} : 435 instances (5\%)
+    \item \textbf{Camion} : 477 instances (5\%)
+\end{itemize}
+
+Ce déséquilibre significatif explique les variations de performance entre classes.
+
+\section{Protocole d'Entraînement}
+L'entraînement a été réalisé sur plusieurs époques avec :
+\begin{itemize}
+    \item Optimiseur adaptatif
+    \item Fonction de perte combinant localisation, classification et confiance
+\end{itemize}
+
+\section{Résultats Quantitatifs}
+
+\subsection{Courbes d'Entraînement}
+La Figure~\ref{fig:results} présente l'évolution des pertes et des métriques au cours de l'entraînement.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{results.png}
+    \caption{Évolution des pertes et métriques durant l'entraînement}
+    \label{fig:results}
+\end{figure}
+
+\textbf{Interprétation :}
+\begin{itemize}
+    \item \textcolor{darkgreen}{\textbf{Convergence réussie}} : Les pertes (box, cls, dfl) diminuent progressivement
+    \item \textbf{Stabilisation après 15 époques} : Le modèle atteint un plateau de performance
+    \item \textbf{Précision finale} : ~0.85 sur l'ensemble d'entraînement
+    \item \textbf{Rappel stable} : ~0.78, indiquant une bonne détection des objets présents
+    \item \textcolor{darkorange}{\textbf{Écart train/val modéré}} : Pas de surapprentissage majeur
+\end{itemize}
+
+\subsection{Précision, Rappel et mAP}
+Les courbes précision-rappel et les performances par IoU sont présentées ci-dessous.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{BoxP_curve.png}
+        \caption{Courbe Précision}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{BoxR_curve.png}
+        \caption{Courbe Rappel}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{BoxPR_curve.png}
+        \caption{Courbe Précision-Rappel}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \includegraphics[width=\textwidth]{BoxF1_curve.png}
+        \caption{Score F1}
+    \end{subfigure}
+    \caption{Analyse des performances du modèle}
+\end{figure}
+
+\subsection{Analyse Détaillée par Classe}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\rowcolor{lightblue}
+\textbf{Classe} & \textbf{mAP@0.5} & \textbf{Performance} \\
+\hline
+\rowcolor{lightgreen}
+Voiture & 0.950 & Excellente \\
+\hline
+Deux-roues & 0.911 & Excellente \\
+\hline
+Plaque d'immatriculation & 0.871 & Très bonne \\
+\hline
+\rowcolor{lightorange}
+Bus & 0.856 & Bonne \\
+\hline
+Camion & 0.805 & Bonne \\
+\hline
+\rowcolor{lightorange}
+Plaque d'immatriculation floutée & 0.730 & Modérée \\
+\hline
+\rowcolor{lightorange}
+Auto-rickshaw & 0.705 & Modérée \\
+\hline
+\end{tabular}
+\caption{Performances par classe (mAP@0.5)}
+\end{table}
+
+\textbf{Observations clés :}
+\begin{itemize}
+    \item \textcolor{darkgreen}{\textbf{Classes performantes}} : Voiture (0.950) et Deux-roues (0.911) grâce à leur forte représentation
+    \item \textcolor{darkorange}{\textbf{Classes difficiles}} : Plaque d'immatriculation floutée (0.730) en raison du flou intentionnel
+    \item \textcolor{darkred}{\textbf{Impact du déséquilibre}} : Auto-rickshaw (0.705) souffre du manque de données d'entraînement
+\end{itemize}
+
+\subsection{Matrice de Confusion}
+La matrice de confusion (Figure~\ref{fig:confusion}) met en évidence les confusions entre certaines classes visuellement proches.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{confusion_matrix_normalized.png}
+    \caption{Matrice de confusion normalizé du modèle}
+    \label{fig:confusion}
+\end{figure}
+
+\textbf{Analyse des confusions principales :}
+\begin{itemize}
+    \item \textbf{Voiture} : 93\% correctement détectées, mais 46\% d'erreurs vers le background (détections manquées)
+    \item \textcolor{darkred}{\textbf{Plaque d'immatriculation floutée}} : Seulement 50\% de détections correctes - classe la plus problématique
+    \item \textbf{Deux-roues} : 87\% de précision, 14\% confondus avec background
+    \item \textbf{Auto-rickshaw} : 74\% de précision, confusion notable avec bus (8\%)
+    \item \textbf{Camion} : 61\% seulement, forte confusion avec background (26\%)
+\end{itemize}
+
+\section{Évaluation Qualitative}
+Les Figures~\ref{fig:train} et~\ref{fig:val} présentent des exemples de prédictions sur les ensembles d'entraînement et de validation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{train_batch1.jpg}
+    \caption{Exemples de prédictions sur l'ensemble d'entraînement}
+    \label{fig:train}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{val_batch1_pred.jpg}
+    \caption{Exemples de prédictions sur l'ensemble de validation}
+    \label{fig:val}
+\end{figure}
+
+\section{Discussion}
+
+\subsection{Points Forts du Modèle}
+\begin{itemize}
+    \item \textcolor{darkgreen}{\textbf{Performance globale solide}} : mAP@50 de 0.829 indique une excellente capacité de détection
+    \item \textbf{Équilibre précision-rappel} : Valeurs similaires (~0.78) montrent un modèle bien calibré
+    \item \textbf{Excellente détection des véhicules standards} : Voitures et deux-roues détectés avec grande précision
+    \item \textbf{Convergence stable} : Absence de surapprentissage majeur
+\end{itemize}
+
+\subsection{Limitations Identifiées}
+Les principales erreurs observées proviennent de :
+\begin{itemize}
+    \item \textcolor{darkred}{\textbf{Occlusions partielles}} : Difficultés avec les véhicules partiellement masqués
+    \item \textcolor{darkorange}{\textbf{Forte similarité visuelle}} : Confusions entre camions/bus et background
+    \item \textbf{Variations d'échelle importantes} : Objets très petits (plaques d'immatriculation) difficiles à détecter
+    \item \textcolor{darkred}{\textbf{Déséquilibre des données}} : Classes minoritaires (auto-rickshaw) sous-performantes
+    \item \textbf{Flou intentionnel} : Plaques d'immatriculation floutées particulièrement problématiques (50\% de détection)
+\end{itemize}
+
+\subsection{Recommandations d'Amélioration}
+\begin{enumerate}
+    \item \textbf{Équilibrage du jeu de données} : Augmenter les instances des classes minoritaires (auto-rickshaw, camion)
+    \item \textbf{Augmentation de données ciblée} : Focus sur les occlusions et variations d'échelle
+    \item \textbf{Post-traitement} : Ajuster les seuils de confiance par classe
+    \item \textbf{Architecture} : Tester des variantes YOLO avec meilleure détection multi-échelle
+    \item \textbf{Entraînement plus long} : Potentiel d'amélioration jusqu'à 30-40 époques
+\end{enumerate}
+
+\section{Conclusion}
+
+Ce travail a démontré l'efficacité de l'architecture YOLO pour la détection multi-classes de véhicules, avec une \textbf{mAP@50 de 0.829} et des performances particulièrement remarquables sur les classes majoritaires (Voiture: 0.950, Deux-roues: 0.911).
+
+Les défis principaux résident dans la gestion du déséquilibre des données et la détection d'objets avec caractéristiques dégradées (flou) ou de petite taille. Malgré ces limitations, le modèle présente un excellent compromis précision-rappel et constitue une base solide pour un système de détection en temps réel.
+
+Des améliorations futures ciblant l'équilibrage des données et l'optimisation par classe permettraient d'atteindre des performances encore supérieures, particulièrement pour les catégories actuellement sous-représentées.
+
+\end{document}
